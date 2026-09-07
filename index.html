@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+        content="NASA Space Cloud — Exploración espacial impulsada por Microsoft Azure y NASA APIs">
+
+    <title>NASA Space Cloud | Mission Control</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =====================================================
+         BACKGROUND
+    ====================================================== -->
+
+    <div class="space-background">
+        <div class="stars"></div>
+        <div class="nebula nebula-one"></div>
+        <div class="nebula nebula-two"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+
+    <!-- =====================================================
+         NAVIGATION
+    ====================================================== -->
+
+    <header class="navbar">
+
+        <a href="#" class="brand">
+
+            <span class="brand-orbit">
+                <span class="brand-dot"></span>
+            </span>
+
+            <span>
+                <strong>NASA</strong>
+                <small>SPACE CLOUD</small>
+            </span>
+
+        </a>
+
+
+        <nav class="nav-links">
+
+            <a href="#mission">Mission</a>
+            <a href="#apod">APOD</a>
+            <a href="#explore">Explore</a>
+            <a href="#analytics">Analytics</a>
+
+        </nav>
+
+
+        <div class="system-status">
+
+            <span class="status-dot"></span>
+
+            <span>SYSTEM ONLINE</span>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main id="mission">
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <div class="eyebrow">
+
+                    <span></span>
+
+                    MICROSOFT AZURE × NASA
+
+                </div>
+
+
+                <h1>
+
+                    EXPLORE
+
+                    <span>BEYOND</span>
+
+                    LIMITS.
+
+                </h1>
+
+
+                <p class="hero-description">
+
+                    Una experiencia de exploración espacial impulsada por
+                    servicios cloud, datos de NASA y tecnología serverless.
+
+                </p>
+
+
+                <div class="hero-actions">
+
+                    <a href="#apod" class="btn btn-primary">
+
+                        <span>ENTER MISSION CONTROL</span>
+
+                        <span class="arrow">→</span>
+
+                    </a>
+
+
+                    <a href="#explore" class="btn btn-secondary">
+
+                        EXPLORE DATA
+
+                    </a>
+
+                </div>
+
+
+                <div class="hero-metrics">
+
+                    <div class="metric">
+
+                        <span class="metric-value">
+                            NASA
+                        </span>
+
+                        <span class="metric-label">
+                            DATA SOURCE
+                        </span>
+
+                    </div>
+
+
+                    <div class="metric-divider"></div>
+
+
+                    <div class="metric">
+
+                        <span class="metric-value">
+                            AZURE
+                        </span>
+
+                        <span class="metric-label">
+                            CLOUD PLATFORM
+                        </span>
+
+                    </div>
+
+
+                    <div class="metric-divider"></div>
+
+
+                    <div class="metric">
+
+                        <span class="metric-value">
+                            24/7
+                        </span>
+
+                        <span class="metric-label">
+                            MISSION ACCESS
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ORBITAL VISUAL -->
+
+            <div class="hero-visual">
+
+                <div class="orbital-system">
+
+                    <div class="orbit orbit-one"></div>
+
+                    <div class="orbit orbit-two"></div>
+
+                    <div class="orbit orbit-three"></div>
+
+
+                    <div class="planet">
+
+                        <div class="planet-glow"></div>
+
+                    </div>
+
+
+                    <div class="satellite">
+
+                        <span></span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="visual-label">
+
+                    <span>MISSION</span>
+
+                    <strong>∞</strong>
+
+                    <span>DISCOVERY</span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             APOD
+        ================================================== -->
+
+        <section id="apod" class="section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        01 / DAILY DISCOVERY
+                    </span>
+
+                    <h2>
+
+                        Astronomy
+
+                        <span>Picture of the Day</span>
+
+                    </h2>
+
+                </div>
+
+
+                <div class="section-number">
+                    APOD
+                </div>
+
+            </div>
+
+
+            <div id="apod-card" class="apod-card">
+
+                <div class="loading-state">
+
+                    <div class="loader"></div>
+
+                    <p>
+                        CONNECTING TO NASA...
+                    </p>
+
+                    <span>
+                        Establishing secure cloud connection
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             EXPLORE
+        ================================================== -->
+
+        <section id="explore" class="section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        02 / DEEP SPACE
+                    </span>
+
+                    <h2>
+
+                        Explore the
+
+                        <span>Universe</span>
+
+                    </h2>
+
+                </div>
+
+
+                <div class="section-number">
+                    DATA
+                </div>
+
+            </div>
+
+
+
+            <div class="explore-grid">
+
+<!-- ASTEROIDS -->
+
+<article class="explore-card asteroid-card">
+
+    <div class="card-top">
+
+        <span class="card-index">
+            02.01
+        </span>
+
+        <span class="card-status">
+            LIVE DATA
+        </span>
+
+    </div>
+
+    <div class="card-icon">
+        ☄
+    </div>
+
+    <h3>
+        Asteroid Watch
+    </h3>
+
+    <p>
+        Monitorea objetos cercanos a la Tierra utilizando
+        datos astronómicos de NASA.
+    </p>
+
+    <div class="asteroid-stats">
+
+        <div class="asteroid-stat">
+            <span>NEAR-EARTH OBJECTS</span>
+            <strong id="asteroid-count">--</strong>
+        </div>
+
+        <div class="asteroid-stat">
+            <span>POTENTIALLY HAZARDOUS</span>
+            <strong id="hazardous-count">--</strong>
+        </div>
+
+    </div>
+
+    <a href="#explore" class="card-link" id="asteroid-refresh">
+
+        REFRESH DATA
+
+        <span>↻</span>
+
+    </a>
+
+</article>
+              
+               <!-- MARS -->
+<article class="explore-card mars-card">
+    <div class="card-top">
+        <span class="card-index">
+            02.02
+        </span>
+        <span class="card-status">
+            NASA LIVE
+        </span>
+    </div>
+    <div class="card-icon">
+        ♂
+    </div>
+    <h3>
+        Mars Explorer
+    </h3>
+    <p>
+        Explora imágenes reales de Marte capturadas por
+        el rover Perseverance de NASA.
+    </p>
+    <div class="mars-info">
+        <div class="mars-stat">
+            <span>MISSION</span>
+            <strong>
+                PERSEVERANCE
+            </strong>
+        </div>
+        <div class="mars-stat">
+            <span>LOCATION</span>
+            <strong>
+                JEZERO CRATER
+            </strong>
+        </div>
+    </div>
+    <a
+        href="https://mars.nasa.gov/mars2020/multimedia/raw-images/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="card-link"
+    >
+        EXPLORE MARS
+        <span>→</span>
+    </a>
+</article>
+
+
+                <!-- FAVORITES -->
+
+                <article class="explore-card favorites-card">
+
+                    <div class="card-top">
+
+                        <span class="card-index">
+                            02.03
+                        </span>
+
+                        <span class="card-status">
+                            PERSONAL
+                        </span>
+
+                    </div>
+
+
+                    <div class="card-icon">
+                        ★
+                    </div>
+
+
+                    <h3>
+                        My Universe
+                    </h3>
+
+
+                    <p>
+
+                        Guarda tus descubrimientos favoritos y crea
+                        tu propia colección espacial.
+
+                    </p>
+
+<a href="#my-universe" class="card-link">
+
+    VIEW FAVORITES
+
+    <span>→</span>
+
+</a>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+          <!-- =================================================
+             MY UNIVERSE
+        ================================================== -->
+
+        <section
+            id="my-universe"
+            class="section universe-section"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        02.03 / PERSONAL COLLECTION
+                    </span>
+
+                    <h2>
+                        My
+                        <span>Universe</span>
+                    </h2>
+
+                </div>
+
+                <div class="section-number">
+                    FAVORITES
+                </div>
+
+            </div>
+
+
+            <div class="universe-panel">
+
+                <!-- HEADER -->
+
+                <div class="universe-header">
+
+                    <div class="universe-intro">
+
+                        <span class="universe-label">
+                            PERSONAL DISCOVERY ARCHIVE
+                        </span>
+
+                        <h3>
+                            YOUR COSMIC COLLECTION
+                        </h3>
+
+                        <p>
+                            Tus descubrimientos favoritos
+                            almacenados en NASA Space Cloud.
+                        </p>
+
+                    </div>
+
+
+                    <div class="universe-actions">
+
+                        <div class="universe-counter">
+
+                            <span>
+                                SAVED DISCOVERIES
+                            </span>
+
+                            <strong id="favorites-count">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="universe-refresh"
+                            id="universe-refresh"
+                        >
+
+                            REFRESH UNIVERSE
+
+                            <span>↻</span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FAVORITES CONTENT -->
+
+                <div
+                    id="favorites-container"
+                    class="favorites-container"
+                >
+
+                    <div class="loading-state">
+
+                        <div class="loader"></div>
+
+                        <p>
+                            CONNECTING TO NASA SPACE CLOUD...
+                        </p>
+
+                        <span>
+                            Retrieving your saved discoveries
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+        <!-- =================================================
+             CLOUD ANALYTICS
+        ================================================== -->
+        <!-- =================================================
+     MARS EXPLORER
+================================================== -->
+<section id="mars-explorer" class="mars-explorer-section">
+    <div class="section-heading">
+        <div>
+            <span class="section-kicker">
+                02.04 / RED PLANET
+            </span>
+            <h2>
+                Mars
+                <span>Explorer</span>
+            </h2>
+        </div>
+        <div class="section-number">
+            MARS
+        </div>
+    </div>
+    <div class="mars-command-panel">
+        <!-- HEADER -->
+        <div class="mars-command-header">
+            <div>
+                <span class="mars-label">
+                    NASA MARS MISSION
+                </span>
+                <h3>
+                    PERSEVERANCE
+                </h3>
+            </div>
+            <div class="mars-live">
+                <span class="mars-live-dot"></span>
+                MISSION ACTIVE
+            </div>
+        </div>
+        <!-- MAIN CONTENT -->
+        <div class="mars-main">
+            <!-- IMAGE -->
+            <div class="mars-visual">
+                <div class="mars-image-glow"></div>
+               <div class="mars-image-placeholder">
+
+    <img
+        src="https://d2pn8kiwq2w21t.cloudfront.net/original_images/jpegPIA24487.jpg"
+        alt="Perseverance - NASA"
+        class="mars-real-image"
+        loading="lazy"
+        onerror="this.style.display='none';"
+    >
+
+    <span>
+        PERSEVERANCE · NASA
+    </span>
+
+</div>
+                <div class="mars-scan-line"></div>
+            </div>
+            <!-- DATA -->
+            <div class="mars-data">
+                <div class="mars-data-row">
+                    <span>
+                        ROVER
+                    </span>
+                    <strong>
+                        PERSEVERANCE
+                    </strong>
+                </div>
+                <div class="mars-data-row">
+                    <span>
+                        LOCATION
+                    </span>
+                    <strong>
+                        JEZERO CRATER
+                    </strong>
+                </div>
+                <div class="mars-data-row">
+                    <span>
+                        MISSION
+                    </span>
+                    <strong>
+                        MARS 2020
+                    </strong>
+                </div>
+
+                <div class="mars-data-row">
+    <span>
+        SOL
+    </span>
+    <strong id="mars-sol">
+        1970
+    </strong>
+</div>
+<div class="mars-data-row">
+    <span>
+        CAMERA
+    </span>
+    <strong id="mars-camera">
+        PIXL
+    </strong>
+</div>
+                <div class="mars-data-row">
+                    <span>
+                        STATUS
+                    </span>
+                    <strong class="mars-active">
+                        ACTIVE
+                    </strong>
+                </div>
+                <a
+                    href="https://mars.nasa.gov/mars2020/multimedia/raw-images/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mars-launch"
+                >
+                    OPEN NASA RAW IMAGES
+                    <span>
+                        ↗
+                    </span>
+                </a>
+
+                <button
+    type="button"
+    class="mars-refresh"
+    id="mars-refresh"
+>
+    SYNC MISSION DATA
+    <span>↻</span>
+</button>
+            </div>
+        </div>
+        <!-- FOOTER -->
+        <div class="mars-command-footer">
+            <span>
+                SOURCE: NASA / MARS 2020
+            </span>
+            <span>
+                DATA CHANNEL: ONLINE
+            </span>
+            <span>
+                AZURE LINK: ACTIVE
+            </span>
+        </div>
+    </div>
+</section>
+
+        <section id="analytics" class="section analytics-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        03 / CLOUD INFRASTRUCTURE
+                    </span>
+
+                    <h2>
+
+                        Mission
+
+                        <span>Telemetry</span>
+
+                    </h2>
+
+                </div>
+
+
+                <div class="section-number">
+                    AZURE
+                </div>
+
+            </div>
+
+
+
+            <div class="telemetry-panel">
+
+                <div class="telemetry-header">
+
+                    <div>
+
+                        <span class="panel-label">
+                            SYSTEM MONITOR
+                        </span>
+
+                        <h3>
+                            NASA SPACE CLOUD
+                        </h3>
+
+                    </div>
+
+
+                    <div class="live-indicator">
+
+                        <span></span>
+
+                        OPERATIONAL
+
+                    </div>
+
+                </div>
+<div class="telemetry-grid">
+
+    <div class="telemetry-item">
+        <span>COMPUTE</span>
+
+        <strong>
+            AZURE FUNCTIONS
+        </strong>
+
+        <div class="telemetry-status">
+            <strong>
+                SERVERLESS
+            </strong>
+        </div>
+    </div>
+
+
+    <div class="telemetry-item">
+        <span>SECURITY</span>
+
+        <strong>
+            KEY VAULT
+        </strong>
+
+        <div class="telemetry-status">
+            <strong>
+                PROTECTED
+            </strong>
+        </div>
+    </div>
+
+
+    <div class="telemetry-item">
+        <span>IDENTITY</span>
+
+        <strong>
+            MANAGED IDENTITY
+        </strong>
+
+        <div class="telemetry-status">
+            <strong>
+                ACTIVE
+            </strong>
+        </div>
+    </div>
+
+
+    <div class="telemetry-item">
+        <span>MONITORING</span>
+
+        <strong>
+            APPLICATION INSIGHTS
+        </strong>
+
+        <div class="telemetry-status">
+            <strong>
+                ENABLED
+            </strong>
+        </div>
+    </div>
+
+
+    <div class="mission-status">
+
+        <span class="mission-status-label">
+            MISSION STATUS
+        </span>
+
+        <strong>
+            ALL SYSTEMS NOMINAL
+        </strong>
+
+    </div>
+
+
+    <div class="telemetry-item">
+        <span>DATABASE</span>
+
+        <strong>
+            COSMOS DB
+        </strong>
+
+        <div class="telemetry-status">
+            <strong>
+                ONLINE
+            </strong>
+        </div>
+    </div>
+
+
+    <div class="telemetry-item">
+        <span>NASA DATA</span>
+
+        <strong>
+            NASA APIS
+        </strong>
+
+        <div class="telemetry-status">
+            <strong>
+                CONNECTED
+            </strong>
+        </div>
+    </div>
+
+</div>
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+        <div class="footer-brand">
+
+            <strong>
+                NASA SPACE CLOUD
+            </strong>
+
+            <span>
+                EXPLORE · DISCOVER · CONNECT
+            </span>
+
+        </div>
+
+
+        <div class="footer-tech">
+
+            POWERED BY NASA APIs + MICROSOFT AZURE
+
+        </div>
+
+
+        <div class="footer-copy">
+
+            © 2026 NASA Space Cloud
+
+        </div>
+
+    </footer>
+
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
