@@ -3,6 +3,10 @@ import logging
 import os
 import requests
 import json
+import re
+
+from urllib.parse import urljoin
+from datetime import date
 from azure.cosmos import CosmosClient
 
 
@@ -35,10 +39,151 @@ favorites_container = database.get_container_client(
 # =========================================================
 
 CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "http://127.0.0.1:5500",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
 }
+
+
+# =========================================================
+# APOD STATIC FALLBACK
+# =========================================================
+# Se utiliza únicamente si:
+# 1. api.nasa.gov falla
+# 2. apod.nasa.gov también falla
+#
+# De esta manera el frontend siempre recibe JSON válido.
+# =========================================================
+
+APOD_STATIC_FALLBACK = {
+    "date": "2026-09-06",
+    "title": "Pluto in Enhanced Color",
+    "explanation": (
+        "NASA APOD is temporarily unavailable. "
+        "NASA Space Cloud is displaying a previously verified "
+        "astronomical discovery while the live NASA service reconnects."
+    ),
+    "media_type": "image",
+    "url": (
+        "https://apod.nasa.gov/apod/image/2609/"
+        "PlutoEnhancedHiRes_NewHorizons_960.jpg"
+    ),
+    "hdurl": (
+        "https://apod.nasa.gov/apod/image/2609/"
+        "PlutoEnhancedHiRes_NewHorizons_5000.jpg"
+    ),
+    "service_status": "fallback"
+}
+
+
+# =========================================================
+# NASA APOD FALLBACK
+# =========================================================
+
+def get_apod_fallback():
+
+    logging.warning(
+        "Intentando APOD fallback desde apod.nasa.gov"
+    )
+
+    try:
+
+        response = requests.get(
+            "https://apod.nasa.gov/apod/astropix.html",
+            timeout=15,
+            headers={
+                "User-Agent": "NASA-Space-Cloud/1.0"
+            }
+        )
+
+        response.raise_for_status()
+
+        html = response.text
+
+
+        # -------------------------------------------------
+        # OBTENER IMAGEN
+        # -------------------------------------------------
+
+        image_match = re.search(
+            r'''(?:href|src)=["']([^"']*image/[^"']+)["']''',
+            html,
+            re.IGNORECASE
+        )
+
+        if not image_match:
+            raise ValueError(
+                "No se encontró imagen APOD."
+            )
+
+        image_url = urljoin(
+            "https://apod.nasa.gov/apod/",
+            image_match.group(1)
+        )
+
+
+        # -------------------------------------------------
+        # OBTENER TITULO
+        # -------------------------------------------------
+
+        title_match = re.search(
+            r"<b>\s*(.*?)\s*</b>",
+            html,
+            re.IGNORECASE | re.DOTALL
+        )
+
+        if title_match:
+
+            title = re.sub(
+                r"<[^>]+>",
+                "",
+                title_match.group(1)
+            ).strip()
+
+        else:
+
+            title = (
+                "Astronomy Picture of the Day"
+            )
+
+
+        # -------------------------------------------------
+        # RESPUESTA FALLBACK DINAMICA
+        # -------------------------------------------------
+
+        fallback_data = {
+            "date": date.today().isoformat(),
+            "title": title,
+            "explanation": (
+                "NASA's primary APOD API is temporarily "
+                "unavailable. NASA Space Cloud retrieved "
+                "this discovery directly from the official "
+                "Astronomy Picture of the Day service."
+            ),
+            "media_type": "image",
+            "url": image_url,
+            "hdurl": image_url,
+            "service_status": "official-fallback"
+        }
+
+        logging.info(
+            "APOD recuperado desde fallback oficial."
+        )
+
+        return fallback_data
+
+
+    except Exception as error:
+
+        logging.error(
+            f"Falló APOD fallback oficial: {error}"
+        )
+
+        logging.warning(
+            "Utilizando APOD fallback estático."
+        )
+
+        return APOD_STATIC_FALLBACK
 
 
 # =========================================================
@@ -51,23 +196,56 @@ CORS_HEADERS = {
 )
 def apod(req: func.HttpRequest) -> func.HttpResponse:
 
+    # -----------------------------------------------------
+    # CORS PREFLIGHT
+    # -----------------------------------------------------
+
     if req.method == "OPTIONS":
+
         return func.HttpResponse(
             "",
             status_code=204,
             headers=CORS_HEADERS
         )
 
-    logging.info("Consultando NASA APOD")
 
-    api_key = os.environ.get("NASA_API_KEY")
+    logging.info(
+        "NASA Space Cloud -> Consultando NASA APOD"
+    )
+
+
+    # -----------------------------------------------------
+    # NASA API KEY
+    # -----------------------------------------------------
+
+    api_key = os.environ.get(
+        "NASA_API_KEY"
+    )
+
+
+    # -----------------------------------------------------
+    # SI NO EXISTE API KEY -> FALLBACK
+    # -----------------------------------------------------
 
     if not api_key:
+
+        logging.error(
+            "NASA_API_KEY no está configurada."
+        )
+
+        fallback = get_apod_fallback()
+
         return func.HttpResponse(
-            "No se encontró la configuración NASA_API_KEY.",
-            status_code=500,
+            json.dumps(fallback),
+            status_code=200,
+            mimetype="application/json",
             headers=CORS_HEADERS
         )
+
+
+    # -----------------------------------------------------
+    # INTENTAR NASA API
+    # -----------------------------------------------------
 
     try:
 
@@ -76,27 +254,78 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
             params={
                 "api_key": api_key
             },
-            timeout=10
+            timeout=20,
+            headers={
+                "User-Agent": "NASA-Space-Cloud/1.0",
+                "Accept": "application/json"
+            }
         )
+
+
+        logging.info(
+            f"NASA APOD status: {response.status_code}"
+        )
+
 
         response.raise_for_status()
 
+
+        # -------------------------------------------------
+        # VALIDAR JSON
+        # -------------------------------------------------
+
+        data = response.json()
+
+
+        if not isinstance(data, dict):
+
+            raise ValueError(
+                "NASA APOD devolvió formato inesperado."
+            )
+
+
+        # -------------------------------------------------
+        # AGREGAR ESTADO
+        # -------------------------------------------------
+
+        data["service_status"] = "live"
+
+
+        logging.info(
+            "NASA APOD recuperado correctamente."
+        )
+
+
         return func.HttpResponse(
-            response.text,
+            json.dumps(data),
             status_code=200,
             mimetype="application/json",
             headers=CORS_HEADERS
         )
 
-    except requests.RequestException as error:
+
+    # -----------------------------------------------------
+    # NASA API ERROR -> FALLBACK
+    # -----------------------------------------------------
+
+    except Exception as error:
 
         logging.error(
-            f"Error al consultar la API de NASA: {error}"
+            f"NASA APOD API ERROR: {error}"
         )
 
+
+        fallback = get_apod_fallback()
+
+
+        # IMPORTANTE:
+        # devolvemos 200 para que app.js pueda renderizar
+        # el fallback en lugar de mostrar CONNECTION ERROR.
+
         return func.HttpResponse(
-            "Error al consultar la API de NASA.",
-            status_code=502,
+            json.dumps(fallback),
+            status_code=200,
+            mimetype="application/json",
             headers=CORS_HEADERS
         )
 
@@ -112,24 +341,32 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
 def asteroids(req: func.HttpRequest) -> func.HttpResponse:
 
     if req.method == "OPTIONS":
+
         return func.HttpResponse(
             "",
             status_code=204,
             headers=CORS_HEADERS
         )
 
+
     logging.info(
         "Consultando NASA NEO Asteroids"
     )
 
-    api_key = os.environ.get("NASA_API_KEY")
+
+    api_key = os.environ.get(
+        "NASA_API_KEY"
+    )
+
 
     if not api_key:
+
         return func.HttpResponse(
             "No se encontró la configuración NASA_API_KEY.",
             status_code=500,
             headers=CORS_HEADERS
         )
+
 
     try:
 
@@ -138,10 +375,15 @@ def asteroids(req: func.HttpRequest) -> func.HttpResponse:
             params={
                 "api_key": api_key
             },
-            timeout=10
+            timeout=20,
+            headers={
+                "User-Agent": "NASA-Space-Cloud/1.0"
+            }
         )
 
+
         response.raise_for_status()
+
 
         return func.HttpResponse(
             response.text,
@@ -150,14 +392,17 @@ def asteroids(req: func.HttpRequest) -> func.HttpResponse:
             headers=CORS_HEADERS
         )
 
+
     except requests.RequestException as error:
 
         logging.error(
             f"Error al consultar NASA NEO: {error}"
         )
 
+
         return func.HttpResponse(
-            "Error al consultar los datos de asteroides de NASA.",
+            "Error al consultar los datos "
+            "de asteroides de NASA.",
             status_code=502,
             headers=CORS_HEADERS
         )
@@ -172,6 +417,7 @@ def asteroids(req: func.HttpRequest) -> func.HttpResponse:
     methods=["GET", "POST", "OPTIONS"]
 )
 def favorites(req: func.HttpRequest) -> func.HttpResponse:
+
 
     # -----------------------------------------------------
     # CORS PREFLIGHT
@@ -199,10 +445,12 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
                 "default-user"
             )
 
+
             query = """
             SELECT * FROM c
             WHERE c.userId = @userId
             """
+
 
             parameters = [
                 {
@@ -210,6 +458,7 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
                     "value": user_id
                 }
             ]
+
 
             items = list(
                 favorites_container.query_items(
@@ -219,6 +468,7 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
                 )
             )
 
+
             return func.HttpResponse(
                 json.dumps(items),
                 status_code=200,
@@ -226,11 +476,13 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
                 headers=CORS_HEADERS
             )
 
+
         except Exception as error:
 
             logging.error(
                 f"Error obteniendo los favoritos: {error}"
             )
+
 
             return func.HttpResponse(
                 "Error al obtener los favoritos.",
@@ -249,33 +501,42 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
 
             data = req.get_json()
 
+
             item = {
+
                 "id": data["id"],
+
                 "userId": data.get(
                     "userId",
                     "default-user"
                 ),
+
                 "type": data.get(
                     "type",
                     "unknown"
                 ),
+
                 "title": data.get(
                     "title",
                     ""
                 ),
+
                 "url": data.get(
                     "url",
                     ""
                 ),
+
                 "date": data.get(
                     "date",
                     ""
                 )
             }
 
+
             favorites_container.upsert_item(
                 item
             )
+
 
             return func.HttpResponse(
                 "Favorito guardado correctamente.",
@@ -283,11 +544,13 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
                 headers=CORS_HEADERS
             )
 
+
         except Exception as error:
 
             logging.error(
                 f"Error guardando favorito: {error}"
             )
+
 
             return func.HttpResponse(
                 "Error al guardar el favorito.",
@@ -307,6 +570,7 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
 def delete_favorite(
     req: func.HttpRequest
 ) -> func.HttpResponse:
+
 
     # -----------------------------------------------------
     # CORS PREFLIGHT
@@ -330,6 +594,7 @@ def delete_favorite(
         favorite_id = req.route_params.get(
             "favorite_id"
         )
+
 
         if not favorite_id:
 
@@ -365,11 +630,16 @@ def delete_favorite(
         # -------------------------------------------------
 
         return func.HttpResponse(
+
             json.dumps({
-                "message": "Favorito eliminado correctamente."
+                "message":
+                    "Favorito eliminado correctamente."
             }),
+
             status_code=200,
+
             mimetype="application/json",
+
             headers=CORS_HEADERS
         )
 
@@ -380,11 +650,17 @@ def delete_favorite(
             f"Error eliminando favorito: {error}"
         )
 
+
         return func.HttpResponse(
+
             json.dumps({
-                "error": "No se pudo eliminar el favorito."
+                "error":
+                    "No se pudo eliminar el favorito."
             }),
+
             status_code=500,
+
             mimetype="application/json",
+
             headers=CORS_HEADERS
         )
