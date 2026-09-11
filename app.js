@@ -182,14 +182,20 @@ async function saveFavorite(data, button) {
         button.disabled = true;
         button.textContent = "SAVING...";
 
-        const favorite = {
-            id: data.date,
-            userId: FAVORITES_USER_ID,
-            type: "apod",
-            title: data.title || "NASA Discovery",
-            url: data.url || "",
-            date: data.date || ""
-        };
+        const safeTitle = (data.title || "nasa-discovery")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+
+const favorite = {
+    id: `${data.date}-${safeTitle}`,
+    userId: FAVORITES_USER_ID,
+    type: "apod",
+    title: data.title || "NASA Discovery",
+    url: data.url || "",
+    date: data.date || ""
+};
 
         const response = await fetch(
             FAVORITES_API_URL,
@@ -272,12 +278,17 @@ async function checkAPODFavoriteStatus(apodData) {
 
         const favorites =
             await response.json();
+             console.log(
+             "CHECK FAVORITE STATUS:",
+              apodData.date,
+                favorites
+                 );
 
         const alreadySaved =
             Array.isArray(favorites) &&
             favorites.some(
                 favorite =>
-                    favorite.id === apodData.date
+                    String(favorite.url) === String(apodData.url)
             );
 
         if (alreadySaved) {
