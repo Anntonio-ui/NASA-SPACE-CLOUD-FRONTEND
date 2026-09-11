@@ -164,6 +164,7 @@ function renderAPOD(data) {
             "click",
             () => saveFavorite(data, favoriteButton)
         );
+         checkAPODFavoriteStatus(data);
     }
 }
 /* =========================================================
@@ -239,6 +240,74 @@ async function saveFavorite(data, button) {
 
         alert(
             "Unable to save this favorite."
+        );
+    }
+}
+/* =========================================================
+CHECK IF APOD IS ALREADY SAVED
+========================================================= */
+
+async function checkAPODFavoriteStatus(apodData) {
+
+    const button =
+        document.getElementById("add-favorite-btn");
+
+    if (!button || !apodData || !apodData.date) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            FAVORITES_API_URL +
+            "?userId=" +
+            encodeURIComponent(FAVORITES_USER_ID)
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "HTTP " + response.status
+            );
+        }
+
+        const favorites =
+            await response.json();
+
+        const alreadySaved =
+            Array.isArray(favorites) &&
+            favorites.some(
+                favorite =>
+                    favorite.id === apodData.date
+            );
+
+        if (alreadySaved) {
+
+            button.disabled = true;
+
+            button.textContent =
+                "♡ SAVED TO FAVORITES";
+
+            button.classList.add(
+                "favorite-saved"
+            );
+
+        } else {
+
+            button.disabled = false;
+
+            button.textContent =
+                "ADD TO FAVORITES";
+
+            button.classList.remove(
+                "favorite-saved"
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "CHECK FAVORITE STATUS ERROR:",
+            error
         );
     }
 }
@@ -984,4 +1053,3 @@ if (universeRefresh) {
         }
     }
 );
-// GitHub Pages cache refresh
