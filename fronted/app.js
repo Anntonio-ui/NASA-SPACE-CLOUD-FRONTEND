@@ -272,12 +272,17 @@ async function checkAPODFavoriteStatus(apodData) {
 
         const favorites =
             await response.json();
+             console.log(
+             "CHECK FAVORITE STATUS:",
+              apodData.date,
+                favorites
+                 );
 
         const alreadySaved =
             Array.isArray(favorites) &&
             favorites.some(
                 favorite =>
-                    favorite.id === apodData.date
+                    String(favorite.id) === String(apodData.date)
             );
 
         if (alreadySaved) {
