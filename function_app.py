@@ -48,12 +48,6 @@ CORS_HEADERS = {
 # =========================================================
 # APOD STATIC FALLBACK
 # =========================================================
-# Se utiliza únicamente si:
-# 1. api.nasa.gov falla
-# 2. apod.nasa.gov también falla
-#
-# De esta manera el frontend siempre recibe JSON válido.
-# =========================================================
 
 APOD_STATIC_FALLBACK = {
     "date": "2026-09-06",
@@ -80,16 +74,56 @@ APOD_STATIC_FALLBACK = {
 # NASA APOD FALLBACK
 # =========================================================
 
-def get_apod_fallback():
+def get_apod_fallback(requested_date=None):
 
     logging.warning(
-        "Intentando APOD fallback desde apod.nasa.gov"
+        f"Intentando APOD fallback para fecha: "
+        f"{requested_date or 'today'}"
     )
 
     try:
 
+        # =================================================
+        # CONSTRUIR URL APOD
+        # =================================================
+
+        if requested_date:
+
+            match = re.match(
+                r"^(\d{4})-(\d{2})-(\d{2})$",
+                requested_date
+            )
+
+            if not match:
+
+                raise ValueError(
+                    "Formato de fecha APOD inválido."
+                )
+
+            year = match.group(1)[2:]
+            month = match.group(2)
+            day = match.group(3)
+
+            apod_page_url = (
+                "https://apod.nasa.gov/apod/ap"
+                + year
+                + month
+                + day
+                + ".html"
+            )
+
+        else:
+
+            apod_page_url = (
+                "https://apod.nasa.gov/apod/astropix.html"
+            )
+
+        logging.info(
+            f"Consultando fallback APOD: {apod_page_url}"
+        )
+
         response = requests.get(
-            "https://apod.nasa.gov/apod/astropix.html",
+            apod_page_url,
             timeout=15,
             headers={
                 "User-Agent": "NASA-Space-Cloud/1.0"
@@ -100,10 +134,9 @@ def get_apod_fallback():
 
         html = response.text
 
-
-        # -------------------------------------------------
+        # =================================================
         # OBTENER IMAGEN
-        # -------------------------------------------------
+        # =================================================
 
         image_match = re.search(
             r'''(?:href|src)=["']([^"']*image/[^"']+)["']''',
@@ -112,19 +145,19 @@ def get_apod_fallback():
         )
 
         if not image_match:
+
             raise ValueError(
                 "No se encontró imagen APOD."
             )
 
         image_url = urljoin(
-            "https://apod.nasa.gov/apod/",
+            apod_page_url,
             image_match.group(1)
         )
 
-
-        # -------------------------------------------------
+        # =================================================
         # OBTENER TITULO
-        # -------------------------------------------------
+        # =================================================
 
         title_match = re.search(
             r"<b>\s*(.*?)\s*</b>",
@@ -142,36 +175,77 @@ def get_apod_fallback():
 
         else:
 
-            title = (
-                "Astronomy Picture of the Day"
+            title = "Astronomy Picture of the Day"
+
+        # =================================================
+        # OBTENER EXPLICACION
+        # =================================================
+
+        explanation = (
+            "NASA astronomical discovery retrieved "
+            "from the official Astronomy Picture "
+            "of the Day archive."
+        )
+
+        explanation_match = re.search(
+            r"<b>\s*Explanation:\s*</b>(.*?)(?:<p>|<center>|<hr)",
+            html,
+            re.IGNORECASE | re.DOTALL
+        )
+
+        if explanation_match:
+
+            explanation_html = explanation_match.group(1)
+
+            explanation = re.sub(
+                r"<[^>]+>",
+                " ",
+                explanation_html
             )
 
+            explanation = re.sub(
+                r"\s+",
+                " ",
+                explanation
+            ).strip()
 
-        # -------------------------------------------------
-        # RESPUESTA FALLBACK DINAMICA
-        # -------------------------------------------------
+        # =================================================
+        # RESPUESTA
+        # =================================================
 
         fallback_data = {
-            "date": date.today().isoformat(),
-            "title": title,
-            "explanation": (
-                "NASA's primary APOD API is temporarily "
-                "unavailable. NASA Space Cloud retrieved "
-                "this discovery directly from the official "
-                "Astronomy Picture of the Day service."
-            ),
-            "media_type": "image",
-            "url": image_url,
-            "hdurl": image_url,
-            "service_status": "official-fallback"
+
+            "date":
+                requested_date
+                if requested_date
+                else date.today().isoformat(),
+
+            "title":
+                title,
+
+            "explanation":
+                explanation,
+
+            "media_type":
+                "image",
+
+            "url":
+                image_url,
+
+            "hdurl":
+                image_url,
+
+            "service_status":
+                "official-historical-fallback"
         }
 
         logging.info(
-            "APOD recuperado desde fallback oficial."
+            f"APOD fallback recuperado: "
+            f"{fallback_data['date']} - "
+            f"{fallback_data['title']}"
         )
 
         return fallback_data
-
 
     except Exception as error:
 
@@ -215,6 +289,15 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
 
 
     # -----------------------------------------------------
+    # FECHA APOD OPCIONAL
+    # /api/apod
+    # /api/apod?date=2026-09-11
+    # -----------------------------------------------------
+
+    requested_date = req.params.get("date")
+
+
+    # -----------------------------------------------------
     # NASA API KEY
     # -----------------------------------------------------
 
@@ -224,7 +307,7 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
 
 
     # -----------------------------------------------------
-    # SI NO EXISTE API KEY -> FALLBACK
+    # SIN API KEY -> FALLBACK
     # -----------------------------------------------------
 
     if not api_key:
@@ -233,7 +316,9 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
             "NASA_API_KEY no está configurada."
         )
 
-        fallback = get_apod_fallback()
+        fallback = get_apod_fallback(
+            requested_date
+        )
 
         return func.HttpResponse(
             json.dumps(fallback),
@@ -249,11 +334,24 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
 
+        params = {
+            "api_key": api_key
+        }
+
+        if requested_date:
+
+            params["date"] = requested_date
+
+
+        logging.info(
+            f"Consultando APOD para fecha: "
+            f"{requested_date or 'today'}"
+        )
+
+
         response = requests.get(
             "https://api.nasa.gov/planetary/apod",
-            params={
-                "api_key": api_key
-            },
+            params=params,
             timeout=20,
             headers={
                 "User-Agent": "NASA-Space-Cloud/1.0",
@@ -270,10 +368,6 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
         response.raise_for_status()
 
 
-        # -------------------------------------------------
-        # VALIDAR JSON
-        # -------------------------------------------------
-
         data = response.json()
 
 
@@ -283,10 +377,6 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
                 "NASA APOD devolvió formato inesperado."
             )
 
-
-        # -------------------------------------------------
-        # AGREGAR ESTADO
-        # -------------------------------------------------
 
         data["service_status"] = "live"
 
@@ -305,7 +395,7 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
 
 
     # -----------------------------------------------------
-    # NASA API ERROR -> FALLBACK
+    # NASA API ERROR -> FALLBACK HISTORICO
     # -----------------------------------------------------
 
     except Exception as error:
@@ -315,12 +405,10 @@ def apod(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 
-        fallback = get_apod_fallback()
+        fallback = get_apod_fallback(
+            requested_date
+        )
 
-
-        # IMPORTANTE:
-        # devolvemos 200 para que app.js pueda renderizar
-        # el fallback en lugar de mostrar CONNECTION ERROR.
 
         return func.HttpResponse(
             json.dumps(fallback),
@@ -418,10 +506,6 @@ def asteroids(req: func.HttpRequest) -> func.HttpResponse:
 )
 def favorites(req: func.HttpRequest) -> func.HttpResponse:
 
-
-    # -----------------------------------------------------
-    # CORS PREFLIGHT
-    # -----------------------------------------------------
 
     if req.method == "OPTIONS":
 
@@ -529,6 +613,11 @@ def favorites(req: func.HttpRequest) -> func.HttpResponse:
                 "date": data.get(
                     "date",
                     ""
+                ),
+
+                "explanation": data.get(
+                    "explanation",
+                    ""
                 )
             }
 
@@ -572,10 +661,6 @@ def delete_favorite(
 ) -> func.HttpResponse:
 
 
-    # -----------------------------------------------------
-    # CORS PREFLIGHT
-    # -----------------------------------------------------
-
     if req.method == "OPTIONS":
 
         return func.HttpResponse(
@@ -586,10 +671,6 @@ def delete_favorite(
 
 
     try:
-
-        # -------------------------------------------------
-        # OBTENER ID
-        # -------------------------------------------------
 
         favorite_id = req.route_params.get(
             "favorite_id"
@@ -605,29 +686,17 @@ def delete_favorite(
             )
 
 
-        # -------------------------------------------------
-        # OBTENER USER ID
-        # -------------------------------------------------
-
         user_id = req.params.get(
             "userId",
             "default-user"
         )
 
 
-        # -------------------------------------------------
-        # ELIMINAR DE COSMOS DB
-        # -------------------------------------------------
-
         favorites_container.delete_item(
             item=favorite_id,
             partition_key=user_id
         )
 
-
-        # -------------------------------------------------
-        # RESPUESTA EXITOSA
-        # -------------------------------------------------
 
         return func.HttpResponse(
 
